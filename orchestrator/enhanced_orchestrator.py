@@ -17,6 +17,10 @@ from sandbox.sandbox_api import SandboxController
 from scheduler.task_scheduler import TaskScheduler
 from scheduler.skill_marketplace import SkillMarketplace
 from pentesting_ai import PentestingAI
+from legionhbt.core.autonomous_agent_core import AutonomousAgentCore
+from legionhbt.core.autonomous_workflow import AutonomousWorkflow
+from legionhbt.core.agent_memory import MemoryManager
+from legionhbt.core.agent_reasoning import ReasoningEngine
 
 class EnhancedOrchestrator:
     def __init__(self):
@@ -33,13 +37,21 @@ class EnhancedOrchestrator:
         self.skill_marketplace = SkillMarketplace()
         self.pentesting_ai = PentestingAI()
         
+        self.autonomous_core = AutonomousAgentCore(memory_path="/app/legionhbt_0406/data/agent_memory.json")
+        self.autonomous_workflow = AutonomousWorkflow(self.autonomous_core)
+            self.reasoning_engine = ReasoningEngine()
+            self.memory_manager = MemoryManager()
+            
+            self._register_autonomous_tools()
+            
         self.conversations: Dict[str, List[Dict]] = {}
         self.system_status = {
-            "agent": True,
-            "model": True,
-            "rag": True,
-            "sandbox": True,
-            "evolution": True
+        "agent": True,
+        "model": True,
+        "rag": True,
+        "sandbox": True,
+        "evolution": True,
+        "autonomous": True
         }
         
         self.active_connections: List[WebSocket] = []
@@ -274,7 +286,77 @@ class EnhancedOrchestrator:
         response += "Ready for command execution.\n"
         yield response
     
+        def _register_autonomous_tools(self):
+        def search_tool(query: str) -> str:
+            return f"Search results for: {query}"
+
+        def analyze_tool(data: str) -> str:
+            return f"Analysis of: {data}"
+
+        def execute_tool(command: str) -> str:
+            return f"Executed: {command}"
+
+        self.autonomous_core.register_tool("search", search_tool, "Search for information")
+        self.autonomous_core.register_tool("analyze", analyze_tool, "Analyze data or content")
+        self.autonomous_core.register_tool("execute", execute_tool, "Execute a command")
+
+    def _setup_autonomous_routes(self):
+        @self.app.post("/api/autonomous/goal")
+        async def submit_goal(request: Dict):
+            goal = request.get("goal", "")
+            pattern = request.get("pattern", "sequential")
+
+            workflow_id = self.autonomous_workflow.create_workflow(goal, pattern)
+            result = self.autonomous_workflow.execute_workflow(workflow_id)
+
+            return {
+                "workflow_id": workflow_id,
+                "success": result.success,
+                "execution_time": result.execution_time,
+                "completed_tasks": len(result.completed_nodes),
+                "failed_tasks": len(result.failed_nodes)
+            }
+
+        @self.app.get("/api/autonomous/workflow/{workflow_id}")
+        async def get_workflow_status(workflow_id: str):
+            status = self.autonomous_workflow.get_workflow_status()
+            return status
+
+        @self.app.post("/api/autonomous/reason")
+        async def autonomous_reason(request: Dict):
+            problem = request.get("problem", "")
+            mode = request.get("mode", "react")
+
+            if mode == "react":
+                result = self.reasoning_engine.solve_with_react(
+                    problem, ["search", "analyze"], lambda t, p: "Tool result"
+                )
+            elif mode == "tot":
+                def gen_thoughts(prob, n):
+                    return [f"Thought {i}" for i in range(n)]
+                def eval_thought(thought):
+                    return 0.8
+                result = self.reasoning_engine.solve_with_tot(problem, gen_thoughts, eval_thought)
+            else:
+                result = {"mode": mode, "problem": problem}
+
+            return result
+
+        @self.app.get("/api/autonomous/memory")
+        async def get_memory_status():
+            return {
+                "episodic_entries": len(self.autonomous_core.memory.episodic.memories),
+                "semantic_entries": len(self.autonomous_core.memory.semantic.knowledge),
+                "working_memory": len(self.autonomous_core.memory.working.get_current())
+            }
+
+        @self.app.post("/api/autonomous/memory/save")
+        async def save_memory():
+            self.autonomous_core.save_state()
+            return {"success": True}
+
     def run(self, host: str = "0.0.0.0", port: int = 8080):
+        self._setup_autonomous_routes()
         self.scheduler.start()
         import uvicorn
         uvicorn.run(self.app, host=host, port=port)

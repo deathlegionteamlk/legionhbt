@@ -1,16 +1,27 @@
-# LEGIONHBT - Autonomous AI Pentesting Ecosystem
+# LEGIONHBT — Autonomous AI Pentesting Ecosystem
 
-**Created by death legion | Coded by Demo X Hexa**
+> **Built by death legion · Coded by Demo X Hexa**
 
-A complete open-source autonomous AI pentesting ecosystem with three integrated systems: autonomous pentesting agent, fine-tuned security model, and RAG security knowledge system.
+![Hacking Animation](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcDRkbWg5aXo5dW82dDljMWhuNHYxdm43bTcwNnJ0MGZqcWc3NnlkNyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/RDZo7znAdn2u7sAcWH/giphy.gif)
 
-## Overview
+Three systems. One ecosystem. Zero hand-holding.
 
-LEGIONHBT is an autonomous AI pentesting ecosystem inspired by Claude Mythos architecture. It combines three powerful systems to provide comprehensive security assessment capabilities:
+LEGIONHBT is a fully autonomous AI pentesting suite — agent, model, and knowledge base working together. It's open source, modular, and built for people who know what they're doing.
 
-1. **LEGIONHBT-AGENT**: Autonomous pentesting agent with LLM integration
-2. **LEGIONHBT-MODEL**: Fine-tuned security model for CVE analysis and exploit generation
-3. **LEGIONHBT-RAG**: RAG-based security knowledge system with vector database
+---
+
+## What's Inside
+
+![System Overview](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExcW83bHgxY2szYzZ4NHZ5NTFpNGI4aG1iNGF6NTNicGpldWp4MHVtZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/26tn33aiTi1jkl6H6/giphy.gif)
+
+| System | Port | What it does |
+|---|---|---|
+| **LEGIONHBT-AGENT** | `8080` | Autonomous recon + exploitation |
+| **LEGIONHBT-MODEL** | `8081` | Fine-tuned CVE/exploit brain |
+| **LEGIONHBT-RAG** | `8082` | Vector-powered security knowledge |
+| **Orchestrator** | `8083` | Routes everything, watches everything |
+
+---
 
 ## Architecture
 
@@ -18,249 +29,280 @@ LEGIONHBT is an autonomous AI pentesting ecosystem inspired by Claude Mythos arc
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                         LEGIONHBT ECOSYSTEM                                  │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐      │
-│  │   AGENT (8080)   │    │   MODEL (8081)   │    │    RAG (8082)    │      │
-│  │                  │    │                  │    │                  │      │
-│  │ • Autonomous     │    │ • Qwen 2.5 7B    │    │ • Qdrant Vector  │      │
-│  │   Pentesting     │    │ • LoRA Fine-tuned│    │   DB             │      │
-│  │ • LLM APIs       │    │ • CVE Analysis   │    │ • CVE/Exploit    │      │
-│  │ • Tool Calling   │    │ • Exploit Gen    │    │   Ingestion      │      │
-│  │ • Session Mgmt   │    │ • Vuln Detection │    │ • RAG Pipeline   │      │
-│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘      │
-│           │                       │                       │                │
-│           └───────────────────────┼───────────────────────┘                │
-│                                   │                                        │
-│                    ┌──────────────┴──────────────┐                        │
-│                    │      ORCHESTRATOR (8083)   │                        │
-│                    │                             │                        │
-│                    │  • Health Monitoring        │                        │
-│                    │  • Query Routing            │                        │
-│                    │  • Unified API              │                        │
-│                    │  • Dashboard                │                        │
-│                    └─────────────────────────────┘                        │
-│                                                                             │
+│                                                                              │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐       │
+│  │   AGENT :8080    │    │   MODEL :8081    │    │    RAG :8082     │       │
+│  │                  │    │                  │    │                  │       │
+│  │ • Autonomous     │    │ • Qwen 2.5 7B    │    │ • Qdrant Vector  │       │
+│  │   Pentesting     │    │ • LoRA Fine-tune │    │   DB             │       │
+│  │ • GPT-4/Claude   │    │ • CVE Analysis   │    │ • CVE Ingestion  │       │
+│  │ • Tool Calling   │    │ • Exploit Gen    │    │ • ExploitDB sync │       │
+│  │ • Session Mgmt   │    │ • Vuln Detection │    │ • RAG Pipeline   │       │
+│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘       │
+│           │                       │                       │                 │
+│           └───────────────────────┼───────────────────────┘                 │
+│                                   ▼                                         │
+│                    ┌──────────────────────────────┐                         │
+│                    │     ORCHESTRATOR :8083        │                         │
+│                    │                              │                         │
+│                    │  • Health Monitoring         │                         │
+│                    │  • Query Routing             │                         │
+│                    │  • Unified API               │                         │
+│                    │  • Live Dashboard            │                         │
+│                    └──────────────────────────────┘                         │
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-## System Components
+---
 
-### 1. LEGIONHBT-AGENT (Port 8080)
+## System 1 — LEGIONHBT-AGENT
 
-Autonomous AI pentesting agent with real LLM API integration.
+![Agent Running](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjRhMW9tOHkyN2p2YXZhdW1zYzFiNGxhZ2xkcGp5bTV2dDU2aW5hZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/077i6AULCXc0FKTj9s/giphy.gif)
 
-**Features:**
-- OpenAI GPT-4, Anthropic Claude, DeepSeek API integration
-- Autonomous vulnerability discovery using ReAct pattern
-- Tool calling for nmap, metasploit, SSH brute force, web scanning
-- Session persistence with SQLite
-- Hash-chained immutable audit log
-- Professional web UI
+The actual agent. Hooks into GPT-4, Claude, or DeepSeek — whichever key you drop in. It runs a ReAct loop, calls real tools (nmap, metasploit, SSH brute, web scanners), and logs every action into a hash-chained audit trail you can't quietly edit later.
 
-**Installation:**
+**Install & run:**
+
 ```bash
 cd legionhbt-agent
 pip install -e .
 python -m agent.main
 ```
 
-**Environment Variables:**
+**Set your keys:**
+
 ```bash
 export OPENAI_API_KEY="your-key"
 export ANTHROPIC_API_KEY="your-key"
 export DEEPSEEK_API_KEY="your-key"
 ```
 
-**API Endpoints:**
-- `GET /api/tools` - List available tools
-- `POST /api/sessions` - Create new pentesting session
-- `GET /api/sessions` - List active sessions
-- `POST /api/chat` - WebSocket chat interface
+**API surface:**
 
-### 2. LEGIONHBT-MODEL (Port 8081)
+```
+GET  /api/tools           → list available tools
+POST /api/sessions        → create a new pentest session
+GET  /api/sessions        → list active sessions
+POST /api/chat            → WebSocket chat interface
+```
 
-Fine-tuned security model based on Qwen 2.5 7B.
+---
 
-**Features:**
-- Base: Qwen/Qwen2.5-7B from HuggingFace
-- LoRA fine-tuning on security datasets
-- CVE analysis endpoint
-- Exploit generation endpoint
-- Vulnerability detection endpoint
-- Safetensors export format
-- FastAPI inference server
+## System 2 — LEGIONHBT-MODEL
 
-**Installation:**
+![Neural Network](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNnhkcGgxOW9yMnZodXk3cjF6OWt5bjg2aXA1eW4wY2Z4OWN0c28xdyZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/xT9IgzoKnwFNmISR8I/giphy.gif)
+
+Qwen 2.5 7B, LoRA fine-tuned on security datasets. Runs local. Knows CVEs, can generate exploit stubs, and will flag vulnerable code patterns if you feed it source.
+
+**Install & run:**
+
 ```bash
 cd legionhbt-model
 pip install -e .
 python -m model.server
 ```
 
-**Training:**
+**Train your own weights:**
+
 ```bash
-python -m model.train --base-model Qwen/Qwen2.5-7B --export-safetensors
+python -m model.train \
+  --base-model Qwen/Qwen2.5-7B \
+  --export-safetensors
 ```
 
-**API Endpoints:**
-- `POST /generate` - Generate security analysis
-- `POST /analyze/cve` - Analyze CVE details
-- `POST /generate/exploit` - Generate exploit code
-- `POST /detect/vulnerability` - Detect vulnerabilities in code
-- `GET /health` - Health check
+**API surface:**
 
-### 3. LEGIONHBT-RAG (Port 8082)
+```
+POST /generate              → general security generation
+POST /analyze/cve           → break down a CVE
+POST /generate/exploit      → generate exploit scaffolding
+POST /detect/vulnerability  → scan code for vulns
+GET  /health                → ping
+```
 
-RAG-based security knowledge system with Qdrant vector database.
+---
 
-**Features:**
-- Qdrant vector database for semantic search
-- CVE database ingestion
-- ExploitDB integration
-- Security paper ingestion
-- Vulnerability writeup ingestion
-- Real-time retrieval augmented generation
-- Connected to frontier LLMs via API
+## System 3 — LEGIONHBT-RAG
 
-**Installation:**
+![Data Flow](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN25uaWR5Zjd4MnFkdGdrZ3d0YXRtZDZzd3N3ZTFwcGdzeGxrcHFtaiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l46Cy1rHbQ92uuLXa/giphy.gif)
+
+Qdrant vector database, pre-loaded with CVEs, ExploitDB entries, security papers, and vuln writeups. Ask it anything in plain text and it pulls the right context before answering through a frontier LLM.
+
+**Install & run:**
+
 ```bash
 cd legionhbt-rag
 pip install -e .
 python -m rag.main
 ```
 
-**API Endpoints:**
-- `GET /api/stats` - Vector store statistics
-- `POST /api/search` - Semantic search
-- `POST /api/chat` - RAG-powered chat
+**API surface:**
 
-### 4. Orchestrator (Port 8083)
+```
+GET  /api/stats   → vector store stats
+POST /api/search  → semantic search
+POST /api/chat    → RAG-powered Q&A
+```
 
-Unified command center for managing all three systems.
+---
 
-**Features:**
-- Health monitoring for all subsystems
-- Intelligent query routing
-- Unified API gateway
-- Real-time dashboard
-- WebSocket updates
+## System 4 — Orchestrator
 
-**Installation:**
+![Control Panel](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExMW1vaWZlajA0YzVjcDd3em9ia2syOThwa3d6OTA5YmRtbno5MTFxdCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oKIPEqDGUULpEU0aQ/giphy.gif)
+
+Ties the other three together. Watches their health, routes queries to the right subsystem, and gives you a single dashboard instead of four browser tabs.
+
+**Install & run:**
+
 ```bash
 cd orchestrator
 pip install -r requirements.txt
 python main.py
 ```
 
-**API Endpoints:**
-- `GET /api/health` - System health status
-- `GET /api/systems` - List all systems
-- `POST /api/query` - Route query to appropriate system
-- `GET /api/agent/sessions` - Proxy to agent sessions
-- `POST /api/model/generate` - Proxy to model generation
-- `POST /api/rag/query` - Proxy to RAG query
+**API surface:**
+
+```
+GET  /api/health          → full system status
+GET  /api/systems         → list registered systems
+POST /api/query           → auto-route any query
+GET  /api/agent/sessions  → proxy → agent
+POST /api/model/generate  → proxy → model
+POST /api/rag/query       → proxy → RAG
+```
+
+---
 
 ## Quick Start
 
-1. **Install all systems:**
+![Terminal](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExb3BsaWFtazIxdXVjYzN3c3QwMmJ6ZG5lazZ2MXQ3aGV0a2ZsdzB3aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/ZvLUtG6BZkBi0/giphy.gif)
+
+**Step 1 — install everything:**
+
 ```bash
-# Install AGENT
 cd legionhbt-agent && pip install -e . && cd ..
-
-# Install MODEL
 cd legionhbt-model && pip install -e . && cd ..
-
-# Install RAG
-cd legionhbt-rag && pip install -e . && cd ..
-
-# Install orchestrator dependencies
-cd orchestrator && pip install -r requirements.txt && cd ..
+cd legionhbt-rag   && pip install -e . && cd ..
+cd orchestrator    && pip install -r requirements.txt && cd ..
 ```
 
-2. **Start all services:**
+**Step 2 — spin up four terminals:**
+
 ```bash
-# Terminal 1 - AGENT
+# Terminal 1
 cd legionhbt-agent && python -m agent.main
 
-# Terminal 2 - MODEL
+# Terminal 2
 cd legionhbt-model && python -m model.server
 
-# Terminal 3 - RAG
+# Terminal 3
 cd legionhbt-rag && python -m rag.main
 
-# Terminal 4 - Orchestrator
+# Terminal 4
 cd orchestrator && python main.py
 ```
 
-3. **Access the systems:**
-- Orchestrator Dashboard: http://localhost:8083
-- AGENT API: http://localhost:8080
-- MODEL API: http://localhost:8081
-- RAG API: http://localhost:8082
+**Step 3 — open your browser:**
+
+```
+http://localhost:8083   ← Orchestrator dashboard
+http://localhost:8080   ← Agent API
+http://localhost:8081   ← Model API
+http://localhost:8082   ← RAG API
+```
+
+---
 
 ## Usage Examples
 
-### Pentesting Session
+### Start a pentest session
+
 ```bash
 curl -X POST http://localhost:8080/api/sessions \
   -H "Content-Type: application/json" \
   -d '{"name": "target_scan", "target": "192.168.1.1"}'
 ```
 
-### CVE Analysis
+### Analyze a CVE
+
 ```bash
 curl -X POST http://localhost:8081/analyze/cve \
   -H "Content-Type: application/json" \
-  -d '{"cve_id": "CVE-2021-44228", "description": "Log4j RCE vulnerability"}'
+  -d '{
+    "cve_id": "CVE-2021-44228",
+    "description": "Log4j RCE vulnerability"
+  }'
 ```
 
-### RAG Query
+### Query the RAG knowledge base
+
 ```bash
 curl -X POST http://localhost:8082/api/chat \
   -H "Content-Type: application/json" \
-  -d '{"question": "What is SQL injection and how to prevent it?"}'
+  -d '{"question": "What is SQL injection and how do I prevent it?"}'
 ```
 
-### Orchestrator Query
+### Route through the orchestrator
+
 ```bash
 curl -X POST http://localhost:8083/api/query \
   -H "Content-Type: application/json" \
   -d '{"query": "Scan target for vulnerabilities", "type": "auto"}'
 ```
 
+---
+
 ## System Requirements
 
+![Requirements Check](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExN2Q2NHd4Y3ZrcjYwYm44ejUxejh0cGI4YzR2d2ZrczBrNzA5MGF6ZiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2K5jinAlChoCLS/giphy.gif)
+
 - Python 3.11+
-- 16GB+ RAM (for model inference)
-- CUDA-capable GPU (optional, for faster inference)
-- Linux/macOS/Windows with WSL
+- 16 GB RAM minimum (model inference is hungry)
+- CUDA GPU optional but makes inference much faster
+- Linux, macOS, or Windows via WSL
 
-## Dependencies
+**Core deps:**
 
-### Core Dependencies
-- PyTorch 2.3+
-- Transformers 4.41+
-- FastAPI
-- Flask
-- Qdrant-client
-- Sentence-transformers
+```
+PyTorch 2.3+
+Transformers 4.41+
+FastAPI
+Flask
+Qdrant-client
+Sentence-transformers
+```
 
-### LLM API Keys (Optional)
-- OpenAI API key
-- Anthropic API key
-- DeepSeek API key
+**LLM API keys** (at least one required for the agent):
+
+```
+OPENAI_API_KEY
+ANTHROPIC_API_KEY
+DEEPSEEK_API_KEY
+```
+
+---
 
 ## Security Notice
 
-This system is designed for authorized security testing only. Always ensure you have explicit permission before scanning or testing any systems you do not own.
+![Warning](https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOWwwMG9kY254aHNuYXlkOGdhemc4NzBlOTc3aDJudnJ3Y3I5YXhncCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l1J9GIXk9w7OYsd5S/giphy.gif)
+
+This tool is for authorized testing only. Don't scan systems you don't own or have written permission to test. That's not a disclaimer — it's just obvious.
+
+---
 
 ## License
 
-MIT License - See LICENSE file for details.
+MIT — see `LICENSE` for details.
+
+---
 
 ## Credits
 
-**Created by death legion**
+**Created by death legion**  
 **Coded by Demo X Hexa**
 
 Inspired by Claude Mythos architecture from Anthropic.
+
+---
+
+*LEGIONHBT — because doing it manually stopped being interesting.*

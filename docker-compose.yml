@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  legionhbt:
+    build: .
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+      - "8083:8083"
+    volumes:
+      - ./data:/app/data
+      - ./audits:/app/audits
+      - ./models:/app/models
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+      - REDIS_URL=redis://redis:6379
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+    depends_on:
+      - redis
+      - qdrant
+    networks:
+      - legionhbt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - legionhbt
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - legionhbt
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  sandbox:
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile
+    privileged: true
+    ports:
+      - "5900-5950:5901"
+      - "6080-6130:6080"
+    environment:
+      - VNC_PASSWORD=${VNC_PASSWORD:-password}
+    volumes:
+      - sandbox_data:/tmp
+    networks:
+      - legionhbt
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+
+volumes:
+  redis_data:
+  qdrant_data:
+  sandbox_data:
+
+networks:
+  legionhbt:
+    driver: bridge

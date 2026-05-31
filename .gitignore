@@ -52,3 +52,9 @@ models/*.pth
 qdrant_storage/
 *.log
 nohup.out
+node_modules/
+ui/node_modules/
+.cache/
+*.tsbuildinfo
+ui/build/
+!ui/build/static/

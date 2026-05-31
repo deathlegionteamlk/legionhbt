@@ -1,0 +1,45 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="legionhbt-model",
+    version="1.0.0",
+    description="LEGIONHBT Fine-tuned Security Model - Specialized AI for CVE analysis and exploit generation",
+    author="death legion",
+    author_email="demo@legionhbt.ai",
+    packages=find_packages(),
+    install_requires=[
+        "torch==2.3.0",
+        "transformers==4.41.0",
+        "peft==0.11.0",
+        "datasets==2.19.0",
+        "accelerate==0.30.0",
+        "bitsandbytes==0.43.0",
+        "safetensors==0.4.3",
+        "fastapi==0.111.0",
+        "uvicorn==0.29.0",
+        "pydantic==2.7.1",
+        "huggingface-hub==0.23.0",
+        "sentencepiece==0.2.0",
+        "protobuf==5.26.0",
+        "scipy==1.13.0",
+    ],
+    python_requires=">=3.9",
+    entry_points={
+        "console_scripts": [
+            "legionhbt-model=model.server:main",
+            "legionhbt-train=model.train:main",
+        ],
+    },
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Information Technology",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Security",
+        "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    ],
+    license="MIT",
+)

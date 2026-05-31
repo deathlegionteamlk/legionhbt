@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGIONHBT - Autonomous AI System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px 40px;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #e94560, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #888;
+            font-size: 0.9em;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px 40px;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+        }
+        
+        .card {
+            background: #16162a;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #252545;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(233, 69, 96, 0.1);
+        }
+        
+        .card h2 {
+            color: #e94560;
+            font-size: 1.3em;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-healthy { background: #00d9ff; box-shadow: 0 0 10px #00d9ff; }
+        .status-degraded { background: #ffd700; box-shadow: 0 0 10px #ffd700; }
+        .status-critical { background: #ff0040; box-shadow: 0 0 10px #ff0040; }
+        
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #252545;
+        }
+        
+        .metric:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            color: #888;
+        }
+        
+        .metric-value {
+            color: #00d9ff;
+            font-weight: 600;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #e94560, #c73e54);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.95em;
+            transition: all 0.2s;
+            margin-top: 15px;
+        }
+        
+        .btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(233, 69, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #252545;
+        }
+        
+        .btn-secondary:hover {
+            background: #353565;
+        }
+        
+        .layer-section {
+            margin-top: 40px;
+        }
+        
+        .layer-title {
+            color: #00d9ff;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #0f3460;
+        }
+        
+        .component-list {
+            list-style: none;
+        }
+        
+        .component-list li {
+            padding: 12px 15px;
+            background: #1a1a35;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 3px solid #e94560;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .component-list li span {
+            color: #888;
+            font-size: 0.85em;
+        }
+        
+        .log-container {
+            background: #0d0d1a;
+            border-radius: 8px;
+            padding: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+        }
+        
+        .log-entry {
+            padding: 5px 0;
+            border-bottom: 1px solid #1a1a35;
+        }
+        
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+        
+        .timestamp {
+            color: #666;
+        }
+        
+        .event-type {
+            color: #00d9ff;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 0.85em;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LEGIONHBT</h1>
+        <p>Autonomous AI System | 12-Component Harness Architecture</p>
+    </div>
+    
+    <div class="container">
+        <div class="grid">
+            <div class="card">
+                <h2>
+                    <span class="status-indicator status-healthy" id="system-status"></span>
+                    System Status
+                </h2>
+                <div class="metric">
+                    <span class="metric-label">State</span>
+                    <span class="metric-value" id="monitor-state">Initializing...</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active Workers</span>
+                    <span class="metric-value" id="active-workers">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Pending Tasks</span>
+                    <span class="metric-value" id="pending-tasks">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Audit Integrity</span>
+                    <span class="metric-value" id="audit-integrity">Checking...</span>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="refreshStatus()">Refresh</button>
+                    <button class="btn btn-secondary" onclick="spawnWorker()">Spawn Worker</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Engagements</h2>
+                <div class="metric">
+                    <span class="metric-label">Pending</span>
+                    <span class="metric-value" id="eng-pending">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Active</span>
+                    <span class="metric-value" id="eng-active">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Completed</span>
+                    <span class="metric-value" id="eng-completed">0</span>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="createEngagement()">New Engagement</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Chain Builder</h2>
+                <div class="metric">
+                    <span class="metric-label">Active Chains</span>
+                    <span class="metric-value" id="active-chains">0</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Completed</span>
+                    <span class="metric-value" id="completed-chains">0</span>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="createChain()">Build Chain</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>Speculation Layer</h2>
+                <div class="metric">
+                    <span class="metric-label">Active Layer</span>
+                    <span class="metric-value" id="active-layer">None</span>
+                </div>
+                <div class="metric">
+                    <span class="metric-label">Total Layers</span>
+                    <span class="metric-value" id="total-layers">0</span>
+                </div>
+                <div class="actions">
+                    <button class="btn" onclick="createLayer()">New Layer</button>
+                    <button class="btn btn-secondary" onclick="commitLayer()">Commit</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="layer-section">
+            <h2 class="layer-title">Layer 1: Engagement Substrate</h2>
+            <ul class="component-list">
+                <li>C1 Engagement Graph <span>SQLite state tracking with hash-chained integrity</span></li>
+                <li>C2 Audit Log <span>Immutable hash-chained event log</span></li>
+                <li>C3 Risk Layer <span>LOW/MEDIUM/HIGH risk classification</span></li>
+                <li>C4 Self-Monitor <span>Deliberative gate with health monitoring</span></li>
+            </ul>
+        </div>
+        
+        <div class="layer-section">
+            <h2 class="layer-title">Layer 2: Discovery & Verification</h2>
+            <ul class="component-list">
+                <li>C5 ULTRAPLAN <span>Strategic objective decomposition</span></li>
+                <li>C6 Coordinator <span>Role-polymorphic worker swarm</span></li>
+                <li>C7 Corroboration <span>Cross-model 2-of-3 consensus</span></li>
+                <li>C8 PoC Verification <span>Dynamic executable verification</span></li>
+                <li>C9 Variant Hunter <span>Deduplicated variant discovery</span></li>
+            </ul>
+        </div>
+        
+        <div class="layer-section">
+            <h2 class="layer-title">Layer 3: Synthesis</h2>
+            <ul class="component-list">
+                <li>C10 Chain Builder <span>Composite critical-path construction</span></li>
+                <li>C11 Fixer <span>Chain-severance proof with CI workflow</span></li>
+                <li>C12 Speculation <span>COW overlay speculation layer</span></li>
+            </ul>
+        </div>
+        
+        <div class="layer-section">
+            <h2 class="layer-title">Recent Audit Events</h2>
+            <div class="log-container" id="audit-log">
+                <div class="log-entry">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>LEGIONHBT v1.0.0 | Created by death legion | Coded by Demo X Hexa | MIT License</p>
+    </div>
+    
+    <script>
+        const API_BASE = '';
+        
+        async function fetchStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/api/status`);
+                return await response.json();
+            } catch (e) {
+                console.error('Failed to fetch status:', e);
+                return null;
+            }
+        }
+        
+        async function fetchAuditLog() {
+            try {
+                const response = await fetch(`${API_BASE}/api/audit/recent?count=20`);
+                return await response.json();
+            } catch (e) {
+                console.error('Failed to fetch audit log:', e);
+                return [];
+            }
+        }
+        
+        function updateUI(status) {
+            if (!status) return;
+            
+            const monitorState = status.monitor?.state || 'unknown';
+            document.getElementById('monitor-state').textContent = monitorState;
+            
+            const statusIndicator = document.getElementById('system-status');
+            statusIndicator.className = 'status-indicator';
+            if (monitorState === 'healthy') statusIndicator.classList.add('status-healthy');
+            else if (monitorState === 'degraded') statusIndicator.classList.add('status-degraded');
+            else statusIndicator.classList.add('status-critical');
+            
+            document.getElementById('active-workers').textContent = status.coordinator?.total_workers || 0;
+            document.getElementById('pending-tasks').textContent = status.coordinator?.pending || 0;
+            document.getElementById('audit-integrity').textContent = status.audit_integrity ? 'Valid' : 'Invalid';
+            
+            document.getElementById('eng-pending').textContent = status.engagements?.pending || 0;
+            document.getElementById('eng-active').textContent = status.engagements?.active || 0;
+        }
+        
+        function updateAuditLog(entries) {
+            const container = document.getElementById('audit-log');
+            if (!entries || entries.length === 0) {
+                container.innerHTML = '<div class="log-entry">No events</div>';
+                return;
+            }
+            
+            container.innerHTML = entries.map(e => `
+                <div class="log-entry">
+                    <span class="timestamp">${new Date(e.timestamp).toLocaleTimeString()}</span>
+                    <span class="event-type">[${e.event_type}]</span>
+                    ${e.component}: ${e.action}
+                </div>
+            `).join('');
+        }
+        
+        async function refreshStatus() {
+            const status = await fetchStatus();
+            updateUI(status);
+            
+            const auditEntries = await fetchAuditLog();
+            updateAuditLog(auditEntries);
+        }
+        
+        async function spawnWorker() {
+            try {
+                await fetch(`${API_BASE}/api/coordinator/workers`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({role: 'general'})
+                });
+                refreshStatus();
+            } catch (e) {
+                alert('Failed to spawn worker');
+            }
+        }
+        
+        async function createEngagement() {
+            try {
+                await fetch(`${API_BASE}/api/engagements`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({type: 'test', payload: {test: true}})
+                });
+                refreshStatus();
+            } catch (e) {
+                alert('Failed to create engagement');
+            }
+        }
+        
+        async function createChain() {
+            try {
+                await fetch(`${API_BASE}/api/chain/build`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        name: 'Test Chain',
+                        description: 'Test execution chain',
+                        links: [{name: 'Start', type: 'sequential', action: {type: 'execute_action', params: {action_type: 'create_node'}}}]
+                    })
+                });
+                alert('Chain created');
+            } catch (e) {
+                alert('Failed to create chain');
+            }
+        }
+        
+        async function createLayer() {
+            try {
+                await fetch(`${API_BASE}/api/speculation/create`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({name: 'Test Layer'})
+                });
+                refreshStatus();
+            } catch (e) {
+                alert('Failed to create layer');
+            }
+        }
+        
+        async function commitLayer() {
+            const layerId = prompt('Enter layer ID to commit:');
+            if (!layerId) return;
+            
+            try {
+                await fetch(`${API_BASE}/api/speculation/commit/${layerId}`, {
+                    method: 'POST'
+                });
+                refreshStatus();
+            } catch (e) {
+                alert('Failed to commit layer');
+            }
+        }
+        
+        setInterval(refreshStatus, 5000);
+        refreshStatus();
+    </script>
+</body>
+</html>

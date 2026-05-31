@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGIONHBT Orchestrator - Unified Command Center</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        .container {
+            padding: 20px;
+        }
+        .systems-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .system-card {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+        }
+        .system-card h3 {
+            color: #fff;
+            margin-bottom: 15px;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-healthy { background: #00ff00; box-shadow: 0 0 10px #00ff00; }
+        .status-unhealthy { background: #ffaa00; }
+        .status-offline { background: #ff0000; }
+        .status-unknown { background: #888; }
+        .system-status {
+            font-size: 14px;
+            margin: 10px 0;
+        }
+        .system-port {
+            color: #888;
+            font-size: 12px;
+        }
+        .query-section {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .query-section h2 {
+            color: #00ff00;
+            margin-bottom: 15px;
+        }
+        .query-input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input, select, textarea {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 12px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+        .btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #00cc00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        .btn.secondary {
+            background: #333;
+            color: #fff;
+        }
+        .results-section {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            min-height: 200px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .architecture-section {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        .architecture-diagram {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 20px;
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+        .error {
+            color: #ff4444;
+        }
+        .success {
+            color: #00ff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>LEGIONHBT ORCHESTRATOR</h1>
+            <div style="color: #888; font-size: 12px;">Unified Command Center | Created by death legion | Coded by Demo X Hexa</div>
+        </div>
+        <div>
+            <span id="connection-status">Disconnected</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="systems-grid">
+            <div class="system-card" id="card-agent">
+                <h3>LEGIONHBT Agent</h3>
+                <div class="system-status">
+                    <span class="status-indicator status-unknown" id="status-agent"></span>
+                    <span id="text-agent">Checking...</span>
+                </div>
+                <div class="system-port">Port 8080</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #888;">Autonomous Pentesting</div>
+            </div>
+            
+            <div class="system-card" id="card-model">
+                <h3>LEGIONHBT Model</h3>
+                <div class="system-status">
+                    <span class="status-indicator status-unknown" id="status-model"></span>
+                    <span id="text-model">Checking...</span>
+                </div>
+                <div class="system-port">Port 8081</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #888;">Fine-tuned Security AI</div>
+            </div>
+            
+            <div class="system-card" id="card-rag">
+                <h3>LEGIONHBT RAG</h3>
+                <div class="system-status">
+                    <span class="status-indicator status-unknown" id="status-rag"></span>
+                    <span id="text-rag">Checking...</span>
+                </div>
+                <div class="system-port">Port 8082</div>
+                <div style="margin-top: 10px; font-size: 12px; color: #888;">Security Knowledge Base</div>
+            </div>
+        </div>
+
+        <div class="query-section">
+            <h2>Unified Query Interface</h2>
+            <div class="query-input-group">
+                <input type="text" id="query-input" placeholder="Enter your security query..." style="flex: 1;">
+                <select id="query-type">
+                    <option value="auto">Auto Route</option>
+                    <option value="pentest">Pentest (Agent)</option>
+                    <option value="analysis">Analysis (Model)</option>
+                    <option value="knowledge">Knowledge (RAG)</option>
+                </select>
+                <button class="btn" onclick="sendQuery()">Send Query</button>
+            </div>
+            <div class="results-section" id="query-results">
+                Results will appear here...
+            </div>
+        </div>
+
+        <div class="architecture-section">
+            <h2>System Architecture</h2>
+            <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         LEGIONHBT ECOSYSTEM                                  │
+│                    Created by death legion | Coded by Demo X Hexa           │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐      │
+│  │   AGENT (8080)   │    │   MODEL (8081)   │    │    RAG (8082)    │      │
+│  │                  │    │                  │    │                  │      │
+│  │ • Autonomous     │    │ • Qwen 2.5 7B    │    │ • Qdrant Vector  │      │
+│  │   Pentesting     │    │ • LoRA Fine-tuned│    │   DB             │      │
+│  │ • LLM APIs       │    │ • CVE Analysis   │    │ • CVE/Exploit    │      │
+│  │ • Tool Calling   │    │ • Exploit Gen    │    │   Ingestion      │      │
+│  │ • Session Mgmt   │    │ • Vuln Detection │    │ • RAG Pipeline   │      │
+│  └────────┬─────────┘    └────────┬─────────┘    └────────┬─────────┘      │
+│           │                       │                       │                │
+│           └───────────────────────┼───────────────────────┘                │
+│                                   │                                        │
+│                    ┌──────────────┴──────────────┐                        │
+│                    │      ORCHESTRATOR (8083)   │                        │
+│                    │                             │                        │
+│                    │  • Health Monitoring        │                        │
+│                    │  • Query Routing            │                        │
+│                    │  • Unified API              │                        │
+│                    │  • Dashboard                │                        │
+│                    └─────────────────────────────┘                        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        
+        socket.on('connect', () => {
+            document.getElementById('connection-status').textContent = 'Connected';
+            document.getElementById('connection-status').style.color = '#0f0';
+            checkHealth();
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').textContent = 'Disconnected';
+            document.getElementById('connection-status').style.color = '#f00';
+        });
+
+        async function checkHealth() {
+            try {
+                const res = await fetch('/api/health');
+                const health = await res.json();
+                
+                health.forEach(h => {
+                    const indicator = document.getElementById(`status-${h.system}`);
+                    const text = document.getElementById(`text-${h.system}`);
+                    
+                    indicator.className = 'status-indicator';
+                    if (h.status === 'healthy') {
+                        indicator.classList.add('status-healthy');
+                        text.textContent = 'Online';
+                    } else if (h.status === 'unhealthy') {
+                        indicator.classList.add('status-unhealthy');
+                        text.textContent = 'Degraded';
+                    } else {
+                        indicator.classList.add('status-offline');
+                        text.textContent = 'Offline';
+                    }
+                });
+            } catch (e) {
+                console.error('Health check failed:', e);
+            }
+        }
+
+        document.getElementById('query-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendQuery();
+        });
+
+        async function sendQuery() {
+            const input = document.getElementById('query-input');
+            const queryType = document.getElementById('query-type');
+            const resultsDiv = document.getElementById('query-results');
+            
+            const query = input.value.trim();
+            if (!query) return;
+            
+            resultsDiv.textContent = 'Processing...';
+            
+            try {
+                const res = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query, type: queryType.value })
+                });
+                
+                const data = await res.json();
+                resultsDiv.textContent = JSON.stringify(data, null, 2);
+            } catch (e) {
+                resultsDiv.innerHTML = `<span class="error">Error: ${e.message}</span>`;
+            }
+        }
+
+        setInterval(checkHealth, 30000);
+    </script>
+</body>
+</html>

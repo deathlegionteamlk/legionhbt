@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGIONHBT Agent - Autonomous Pentesting</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        .header .subtitle {
+            color: #888;
+            font-size: 12px;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 80px);
+        }
+        .panel {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .panel h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .session-item {
+            background: #0f0f1a;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .session-item:hover {
+            border-color: #00ff00;
+            background: #1a1a2e;
+        }
+        .session-item.active {
+            border-color: #00ff00;
+            background: #0f2f0f;
+        }
+        .session-item .name {
+            font-weight: bold;
+            color: #fff;
+        }
+        .session-item .target {
+            font-size: 12px;
+            color: #888;
+        }
+        .session-item .status {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            display: inline-block;
+            margin-top: 5px;
+        }
+        .status.active { background: #0f0; color: #000; }
+        .status.completed { background: #00f; color: #fff; }
+        .status.error { background: #f00; color: #fff; }
+        .btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #00cc00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        .btn.secondary {
+            background: #333;
+            color: #fff;
+        }
+        .btn.secondary:hover {
+            background: #444;
+        }
+        .btn.danger {
+            background: #ff4444;
+            color: #fff;
+        }
+        input, textarea, select {
+            width: 100%;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+        .console {
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 15px;
+            height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .console-line {
+            margin-bottom: 5px;
+        }
+        .console-line.timestamp {
+            color: #666;
+        }
+        .console-line.info { color: #0ff; }
+        .console-line.success { color: #0f0; }
+        .console-line.warning { color: #ff0; }
+        .console-line.error { color: #f00; }
+        .finding-item {
+            background: #0f0f1a;
+            border-left: 3px solid #ff4444;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 0 4px 4px 0;
+        }
+        .finding-item.critical { border-left-color: #ff0000; }
+        .finding-item.high { border-left-color: #ff4444; }
+        .finding-item.medium { border-left-color: #ffaa00; }
+        .finding-item.low { border-left-color: #00ff00; }
+        .finding-title {
+            font-weight: bold;
+            color: #fff;
+        }
+        .finding-severity {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #ff4444;
+            color: #fff;
+            margin-left: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #1a1a2e;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 30px;
+            width: 500px;
+            max-width: 90%;
+        }
+        .modal h2 {
+            color: #00ff00;
+            margin-bottom: 20px;
+        }
+        .close-modal {
+            float: right;
+            font-size: 24px;
+            cursor: pointer;
+            color: #888;
+        }
+        .close-modal:hover {
+            color: #fff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #0f0f1a;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+        .tool-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .tool-tag {
+            background: #0f0f1a;
+            border: 1px solid #333;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .tool-tag:hover {
+            border-color: #00ff00;
+        }
+        .tool-tag.risk-low { border-color: #00ff00; }
+        .tool-tag.risk-medium { border-color: #ffaa00; }
+        .tool-tag.risk-high { border-color: #ff4444; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>LEGIONHBT AGENT</h1>
+            <div class="subtitle">Autonomous AI Pentesting System | Created by death legion | Coded by Demo X Hexa</div>
+        </div>
+        <div>
+            <span id="connection-status">Disconnected</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h3>Sessions</h3>
+            <button class="btn" onclick="showNewSessionModal()">+ New Session</button>
+            <div id="sessions-list"></div>
+        </div>
+
+        <div class="panel">
+            <h3>Active Operation</h3>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-iterations">0</div>
+                    <div class="stat-label">Iterations</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-findings">0</div>
+                    <div class="stat-label">Findings</div>
+                </div>
+            </div>
+            
+            <div id="current-session-info" style="margin-bottom: 15px;">
+                <p style="color: #888;">No active session selected</p>
+            </div>
+
+            <div class="tool-list" id="tool-list"></div>
+
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="objective-input" placeholder="Enter pentesting objective..." 
+                       value="Perform comprehensive security assessment">
+                <button class="btn" onclick="startScan()" id="start-btn">Start Autonomous Scan</button>
+                <button class="btn secondary" onclick="clearConsole()">Clear Console</button>
+            </div>
+
+            <div class="console" id="console"></div>
+        </div>
+
+        <div class="panel">
+            <h3>Findings</h3>
+            <div id="findings-list">
+                <p style="color: #888;">No findings yet</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="new-session-modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="hideNewSessionModal()">&times;</span>
+            <h2>New Pentesting Session</h2>
+            <input type="text" id="session-name" placeholder="Session name">
+            <input type="text" id="session-target" placeholder="Target IP or hostname">
+            <textarea id="session-scope" rows="3" placeholder="Scope (JSON format, optional)"></textarea>
+            <button class="btn" onclick="createSession()">Create Session</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentSession = null;
+        let sessions = [];
+
+        socket.on('connect', () => {
+            document.getElementById('connection-status').textContent = 'Connected';
+            document.getElementById('connection-status').style.color = '#0f0';
+            loadSessions();
+            loadTools();
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').textContent = 'Disconnected';
+            document.getElementById('connection-status').style.color = '#f00';
+        });
+
+        socket.on('scan_complete', (data) => {
+            logConsole('Scan completed!', 'success');
+            loadSessions();
+            if (data.session_id === currentSession) {
+                loadSessionDetails(currentSession);
+            }
+        });
+
+        socket.on('scan_error', (data) => {
+            logConsole('Error: ' + data.error, 'error');
+        });
+
+        async function loadSessions() {
+            const res = await fetch('/api/sessions');
+            sessions = await res.json();
+            renderSessions();
+        }
+
+        function renderSessions() {
+            const container = document.getElementById('sessions-list');
+            container.innerHTML = sessions.map(s => `
+                <div class="session-item ${s.id === currentSession ? 'active' : ''}" onclick="selectSession('${s.id}')">
+                    <div class="name">${s.name}</div>
+                    <div class="target">${s.target}</div>
+                    <span class="status ${s.status}">${s.status}</span>
+                    <span style="float: right; color: #888; font-size: 11px;">${s.findings_count} findings</span>
+                </div>
+            `).join('');
+        }
+
+        async function loadTools() {
+            const res = await fetch('/api/tools');
+            const tools = await res.json();
+            const container = document.getElementById('tool-list');
+            container.innerHTML = tools.map(t => `
+                <span class="tool-tag risk-${t.risk_level.toLowerCase()}" title="${t.description}">
+                    ${t.name}
+                </span>
+            `).join('');
+        }
+
+        async function selectSession(id) {
+            currentSession = id;
+            renderSessions();
+            await loadSessionDetails(id);
+        }
+
+        async function loadSessionDetails(id) {
+            const res = await fetch(`/api/sessions/${id}`);
+            const session = await res.json();
+            
+            document.getElementById('current-session-info').innerHTML = `
+                <strong style="color: #fff;">${session.name}</strong><br>
+                <span style="color: #888;">Target: ${session.target}</span><br>
+                <span style="color: #888;">Status: ${session.status}</span>
+            `;
+            
+            document.getElementById('stat-iterations').textContent = session.actions.length;
+            document.getElementById('stat-findings').textContent = session.findings.length;
+            
+            const findingsContainer = document.getElementById('findings-list');
+            if (session.findings.length === 0) {
+                findingsContainer.innerHTML = '<p style="color: #888;">No findings yet</p>';
+            } else {
+                findingsContainer.innerHTML = session.findings.map(f => `
+                    <div class="finding-item ${f.severity || 'medium'}">
+                        <div class="finding-title">${f.type || 'Finding'}</div>
+                        <div style="color: #888; font-size: 12px; margin-top: 5px;">
+                            ${JSON.stringify(f).substring(0, 200)}...
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            session.actions.forEach(action => {
+                logConsole(`[${action.tool}] ${action.success ? 'Success' : 'Failed'}`, 
+                          action.success ? 'success' : 'error');
+            });
+        }
+
+        function showNewSessionModal() {
+            document.getElementById('new-session-modal').style.display = 'flex';
+        }
+
+        function hideNewSessionModal() {
+            document.getElementById('new-session-modal').style.display = 'none';
+        }
+
+        async function createSession() {
+            const name = document.getElementById('session-name').value;
+            const target = document.getElementById('session-target').value;
+            const scopeStr = document.getElementById('session-scope').value;
+            
+            if (!target) {
+                alert('Target is required');
+                return;
+            }
+            
+            const body = { name, target };
+            if (scopeStr) {
+                try {
+                    body.scope = JSON.parse(scopeStr);
+                } catch (e) {
+                    alert('Invalid JSON in scope');
+                    return;
+                }
+            }
+            
+            const res = await fetch('/api/sessions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+            
+            const session = await res.json();
+            hideNewSessionModal();
+            await loadSessions();
+            selectSession(session.id);
+        }
+
+        async function startScan() {
+            if (!currentSession) {
+                alert('Please select a session first');
+                return;
+            }
+            
+            const objective = document.getElementById('objective-input').value;
+            logConsole('Starting autonomous scan...', 'info');
+            
+            const res = await fetch(`/api/sessions/${currentSession}/start`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ objective, max_iterations: 20 })
+            });
+            
+            const result = await res.json();
+            logConsole(`Scan ${result.status}`, 'info');
+        }
+
+        function logConsole(message, type = 'info') {
+            const console = document.getElementById('console');
+            const timestamp = new Date().toLocaleTimeString();
+            console.innerHTML += `<div class="console-line timestamp">[${timestamp}]</div>`;
+            console.innerHTML += `<div class="console-line ${type}">${message}</div>`;
+            console.scrollTop = console.scrollHeight;
+        }
+
+        function clearConsole() {
+            document.getElementById('console').innerHTML = '';
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('new-session-modal');
+            if (event.target === modal) {
+                hideNewSessionModal();
+            }
+        }
+    </script>
+</body>
+</html>

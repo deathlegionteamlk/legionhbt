@@ -1,0 +1,46 @@
+from setuptools import setup, find_packages
+
+setup(
+    name="legionhbt-rag",
+    version="1.0.0",
+    description="LEGIONHBT RAG Security Knowledge System - Real-time retrieval augmented generation for cybersecurity",
+    author="death legion",
+    author_email="demo@legionhbt.ai",
+    packages=find_packages(),
+    install_requires=[
+        "flask==3.0.3",
+        "flask-socketio==5.3.6",
+        "qdrant-client==1.9.0",
+        "sentence-transformers==2.7.0",
+        "openai==1.30.0",
+        "anthropic==0.28.0",
+        "requests==2.31.0",
+        "numpy==1.26.4",
+        "pandas==2.2.2",
+        "python-dotenv==1.0.1",
+        "aiohttp==3.9.5",
+        "beautifulsoup4==4.12.3",
+        "lxml==5.2.1",
+        "tiktoken==0.7.0",
+        "eventlet==0.36.1",
+    ],
+    python_requires=">=3.9",
+    entry_points={
+        "console_scripts": [
+            "legionhbt-rag=rag.main:main",
+            "legionhbt-ingest=rag.ingest:main",
+        ],
+    },
+    classifiers=[
+        "Development Status :: 4 - Beta",
+        "Intended Audience :: Information Technology",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Topic :: Security",
+        "Topic :: Scientific/Engineering :: Information Analysis",
+    ],
+    license="MIT",
+)

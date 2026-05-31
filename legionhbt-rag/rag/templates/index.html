@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEGIONHBT RAG - Security Knowledge System</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0a0a0a;
+            color: #00ff00;
+            min-height: 100vh;
+        }
+        .header {
+            background: linear-gradient(90deg, #1a1a2e 0%, #16213e 100%);
+            padding: 20px;
+            border-bottom: 2px solid #00ff00;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 28px;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 20px;
+            padding: 20px;
+            height: calc(100vh - 80px);
+        }
+        .panel {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        .panel h3 {
+            color: #00ff00;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #333;
+        }
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100% - 60px);
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+            background: #0a0a0a;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .message.user {
+            background: #0f2f0f;
+            border-left: 3px solid #00ff00;
+        }
+        .message.assistant {
+            background: #0f0f1a;
+            border-left: 3px solid #0088ff;
+        }
+        .message-header {
+            font-weight: bold;
+            margin-bottom: 5px;
+            font-size: 12px;
+            color: #888;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+        input, textarea, select {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #00ff00;
+        }
+        .btn {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #00cc00;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        .btn.secondary {
+            background: #333;
+            color: #fff;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .stat-box {
+            background: #0f0f1a;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00ff00;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+        .source-item {
+            background: #0f0f1a;
+            border-left: 3px solid #0088ff;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 0 4px 4px 0;
+        }
+        .source-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        .source-category {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 3px;
+            background: #0088ff;
+            color: #fff;
+        }
+        .source-score {
+            font-size: 11px;
+            color: #888;
+        }
+        .tool-section {
+            margin-top: 20px;
+        }
+        .tool-btn {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: #00ff00;
+            padding: 8px 15px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .tool-btn:hover {
+            border-color: #00ff00;
+        }
+        .category-filter {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .filter-tag {
+            background: #0f0f1a;
+            border: 1px solid #333;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 11px;
+            cursor: pointer;
+        }
+        .filter-tag.active {
+            background: #00ff00;
+            color: #000;
+            border-color: #00ff00;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div>
+            <h1>LEGIONHBT RAG</h1>
+            <div style="color: #888; font-size: 12px;">Retrieval Augmented Generation for Security Knowledge</div>
+        </div>
+        <div>
+            <span id="connection-status">Disconnected</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="panel">
+            <h3>Security Knowledge Assistant</h3>
+            
+            <div class="category-filter">
+                <span class="filter-tag active" data-category="">All</span>
+                <span class="filter-tag" data-category="CVE">CVE</span>
+                <span class="filter-tag" data-category="EXPLOIT">Exploits</span>
+                <span class="filter-tag" data-category="RESEARCH">Research</span>
+                <span class="filter-tag" data-category="WRITEUP">Writeups</span>
+            </div>
+            
+            <div class="chat-container">
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message assistant">
+                        <div class="message-header">LEGIONHBT RAG</div>
+                        <div>Welcome to the Security Knowledge System. Ask me about CVEs, exploits, vulnerabilities, or security best practices.</div>
+                    </div>
+                </div>
+                
+                <div class="input-group">
+                    <input type="text" id="query-input" placeholder="Ask about security vulnerabilities, CVEs, exploits..." style="flex: 1;">
+                    <button class="btn" onclick="sendQuery()">Send</button>
+                </div>
+            </div>
+            
+            <div class="tool-section">
+                <h3>Security Tools</h3>
+                <button class="tool-btn" onclick="showToolModal('nmap')">Nmap Scan</button>
+                <button class="tool-btn" onclick="showToolModal('webscan')">Web Scan</button>
+                <button class="tool-btn" onclick="showToolModal('cve')">CVE Lookup</button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <h3>Knowledge Base Stats</h3>
+            <div class="stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-docs">0</div>
+                    <div class="stat-label">Documents</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="stat-vectors">0</div>
+                    <div class="stat-label">Vectors</div>
+                </div>
+            </div>
+            
+            <h3>Sources</h3>
+            <div id="sources-list">
+                <p style="color: #888;">No query yet</p>
+            </div>
+            
+            <button class="btn secondary" onclick="triggerIngest()" style="width: 100%; margin-top: 15px;">
+                Refresh Data
+            </button>
+        </div>
+    </div>
+
+    <div class="modal" id="tool-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #1a1a2e; border: 2px solid #00ff00; border-radius: 8px; padding: 30px; width: 500px; max-width: 90%;">
+            <h2 id="tool-modal-title">Tool</h2>
+            <div id="tool-modal-content"></div>
+            <button class="btn secondary" onclick="hideToolModal()" style="margin-top: 15px;">Close</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let currentCategory = '';
+        let currentSources = [];
+
+        socket.on('connect', () => {
+            document.getElementById('connection-status').textContent = 'Connected';
+            document.getElementById('connection-status').style.color = '#0f0';
+            loadStats();
+        });
+
+        socket.on('disconnect', () => {
+            document.getElementById('connection-status').textContent = 'Disconnected';
+            document.getElementById('connection-status').style.color = '#f00';
+        });
+
+        socket.on('query_response', (data) => {
+            addMessage('assistant', data.answer);
+            displaySources(data.sources);
+        });
+
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
+                tag.classList.add('active');
+                currentCategory = tag.dataset.category;
+            });
+        });
+
+        document.getElementById('query-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendQuery();
+        });
+
+        async function loadStats() {
+            const res = await fetch('/api/stats');
+            const stats = await res.json();
+            document.getElementById('stat-docs').textContent = stats.total_documents;
+            document.getElementById('stat-vectors').textContent = stats.vector_size;
+        }
+
+        function sendQuery() {
+            const input = document.getElementById('query-input');
+            const question = input.value.trim();
+            if (!question) return;
+
+            addMessage('user', question);
+            input.value = '';
+
+            fetch('/api/query', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question, category: currentCategory || undefined })
+            })
+            .then(res => res.json())
+            .then(data => {
+                addMessage('assistant', data.answer);
+                displaySources(data.sources);
+            });
+        }
+
+        function addMessage(role, content) {
+            const container = document.getElementById('chat-messages');
+            const msg = document.createElement('div');
+            msg.className = `message ${role}`;
+            msg.innerHTML = `
+                <div class="message-header">${role === 'user' ? 'You' : 'LEGIONHBT RAG'}</div>
+                <div>${content.replace(/\n/g, '<br>')}</div>
+            `;
+            container.appendChild(msg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function displaySources(sources) {
+            const container = document.getElementById('sources-list');
+            if (!sources || sources.length === 0) {
+                container.innerHTML = '<p style="color: #888;">No sources found</p>';
+                return;
+            }
+
+            container.innerHTML = sources.map(s => `
+                <div class="source-item">
+                    <div class="source-header">
+                        <span class="source-category">${s.category}</span>
+                        <span class="source-score">Score: ${s.relevance_score.toFixed(3)}</span>
+                    </div>
+                    <div style="font-size: 12px; color: #888;">${s.source}</div>
+                    <div style="margin-top: 5px; font-size: 13px;">${s.text_preview}</div>
+                </div>
+            `).join('');
+        }
+
+        async function triggerIngest() {
+            const btn = document.querySelector('.btn.secondary');
+            btn.textContent = 'Refreshing...';
+            const res = await fetch('/api/ingest', { method: 'POST' });
+            const data = await res.json();
+            btn.textContent = 'Refresh Data';
+            loadStats();
+            addMessage('assistant', `Data refreshed! Total documents: ${data.stats.total_documents}`);
+        }
+
+        function showToolModal(tool) {
+            const modal = document.getElementById('tool-modal');
+            const title = document.getElementById('tool-modal-title');
+            const content = document.getElementById('tool-modal-content');
+            
+            if (tool === 'nmap') {
+                title.textContent = 'Nmap Scan';
+                content.innerHTML = `
+                    <input type="text" id="nmap-target" placeholder="Target IP or hostname" style="width: 100%; margin-bottom: 10px;">
+                    <button class="btn" onclick="runNmap()">Scan</button>
+                    <div id="nmap-result" style="margin-top: 15px;"></div>
+                `;
+            } else if (tool === 'webscan') {
+                title.textContent = 'Web Security Scan';
+                content.innerHTML = `
+                    <input type="text" id="webscan-url" placeholder="Target URL (https://example.com)" style="width: 100%; margin-bottom: 10px;">
+                    <button class="btn" onclick="runWebscan()">Scan</button>
+                    <div id="webscan-result" style="margin-top: 15px;"></div>
+                `;
+            } else if (tool === 'cve') {
+                title.textContent = 'CVE Lookup';
+                content.innerHTML = `
+                    <input type="text" id="cve-id" placeholder="CVE-2021-44228" style="width: 100%; margin-bottom: 10px;">
+                    <button class="btn" onclick="lookupCVE()">Search</button>
+                    <div id="cve-result" style="margin-top: 15px;"></div>
+                `;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        function hideToolModal() {
+            document.getElementById('tool-modal').style.display = 'none';
+        }
+
+        async function runNmap() {
+            const target = document.getElementById('nmap-target').value;
+            if (!target) return;
+            
+            const resultDiv = document.getElementById('nmap-result');
+            resultDiv.innerHTML = '<div class="loading">Scanning...</div>';
+            
+            const res = await fetch('/api/tools/nmap', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target })
+            });
+            const data = await res.json();
+            
+            resultDiv.innerHTML = data.success 
+                ? `<pre style="background: #0a0a0a; padding: 10px; overflow-x: auto;">${data.output}</pre>`
+                : `<div style="color: #f00;">Error: ${data.error}</div>`;
+        }
+
+        async function runWebscan() {
+            const url = document.getElementById('webscan-url').value;
+            if (!url) return;
+            
+            const resultDiv = document.getElementById('webscan-result');
+            resultDiv.innerHTML = '<div class="loading">Scanning...</div>';
+            
+            const res = await fetch('/api/tools/webscan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url })
+            });
+            const data = await res.json();
+            
+            resultDiv.innerHTML = data.success 
+                ? `<pre style="background: #0a0a0a; padding: 10px; overflow-x: auto;">${data.output}</pre>`
+                : `<div style="color: #f00;">Error: ${data.error}</div>`;
+        }
+
+        async function lookupCVE() {
+            const cveId = document.getElementById('cve-id').value;
+            if (!cveId) return;
+            
+            const resultDiv = document.getElementById('cve-result');
+            resultDiv.innerHTML = '<div class="loading">Searching...</div>';
+            
+            const res = await fetch(`/api/search/cve/${cveId}`);
+            const data = await res.json();
+            
+            if (data.found && data.results.length > 0) {
+                resultDiv.innerHTML = data.results.map(r => `
+                    <div style="background: #0a0a0a; padding: 10px; margin-bottom: 10px; border-radius: 4px;">
+                        <div style="color: #00ff00; font-weight: bold;">${r.metadata.cve_id || cveId}</div>
+                        <div style="margin-top: 5px;">${r.text.substring(0, 300)}...</div>
+                    </div>
+                `).join('');
+            } else {
+                resultDiv.innerHTML = '<div style="color: #888;">No results found</div>';
+            }
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('tool-modal');
+            if (event.target === modal) hideToolModal();
+        }
+    </script>
+</body>
+</html>
